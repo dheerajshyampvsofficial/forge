@@ -1,0 +1,18 @@
+from forge.interpreter import Interpreter
+
+__TOP_LEVEL_INJECTIONS__
+
+class ForgeExecutor:
+  def __init__(self):
+    self.interpreter = Interpreter(
+      "file_path"
+    )
+  
+  def execute(self):
+    __INNER_LEVEL_INJECTIONS__
+    
+  __MID_LEVEL_INJECTIONS__
+  
+
+forge_executor = ForgeExecutor()
+forge_executor.execute()
