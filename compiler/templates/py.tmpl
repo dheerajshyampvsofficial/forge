@@ -1,0 +1,20 @@
+from my_lang import Interpreter
+
+class MyLangExecutor:
+  def __init__(self):
+    self.interpreter = Interpreter(
+      "file_path"
+    )
+  
+  def execute(self):
+    # User given global codes and %%...%%'s executions
+    self.run_global_sections(0)
+    print(cls.add(MyLangObject(...), MyLangObject(...)))
+    
+  # User given global functions declaration: add
+  def add(""" Confused on how to set params by processing %{}'s """):
+    return """ Confused on how to inject expr which is not block (section), by processing %{} """"
+  
+
+my_lang_executor = MyLangexecutor()
+my_lang_executor.execute()
