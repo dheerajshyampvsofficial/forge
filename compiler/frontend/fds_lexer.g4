@@ -1,0 +1,115 @@
+lexer grammar fds_lexer;
+
+/*
+ Fragments (building blocks, usable from every mode, never emitted)
+ */
+
+fragment DIGIT: [0-9]; // DIGIT
+fragment EXPONENT:
+	[eE] [+-]? DIGIT+; // EXPONENT part of a number (e10, E-3)
+fragment NUMBER_BODY:
+	DIGIT+ ('.' DIGIT*)? EXPONENT? // NUMBER BODY: 12, 1.5, 1., 2e10
+	| '.' DIGIT+ EXPONENT?; //   or .5, .5e-3
+fragment VAR_BODY: '@' DIGIT+; // VARiable BODY: @1, @42
+fragment HWS:
+	[ \t\f]; // Horizontal WhiteSpace (space, tab, form feed)
+fragment EOL:
+	'\r'? '\n'
+	| '\r'; // End Of Line (\n, \r\n, old-Mac \r)
+fragment ANY_WS: HWS | EOL; // ANY WhiteSpace, newlines included
+
+/*
+ DEFAULT_MODE : top level. Newline is whitespace.
+ */
+
+MLBRACE:
+	'#[' ANY_WS* -> pushMode(MBrace); // Matrix Left BRACE; swallows blanks/newlines after it
+MRBRACE:
+	']#'; // Matrix Right BRACE; stray here, so the parser reports it
+LPAREN: '('; // Left PARENthesis
+RPAREN: ')'; // Right PARENthesis
+EQUALS: '='; // EQUALS (assignment)
+QMARK: '?'; // Question MARK (ternary condition)
+COLON: ':'; // COLON (ternary else)
+PLUS: '+'; // PLUS (add / unary plus)
+MINUS: '-'; // MINUS (subtract / unary minus)
+STAR: '*'; // STAR (multiply)
+SLASH: '/'; // SLASH (divide)
+COMMA: ','; // COMMA (reserved for future lists)
+SEMI_COLON: ';'; // SEMI COLON (statement terminator)
+NUMBER: NUMBER_BODY; // NUMBER literal
+VAR: VAR_BODY; // VARiable reference
+INC: '++'; // INCrement operator
+DEC: '--'; // DECrement operator
+WS: ANY_WS+ -> skip; // WhiteSpace, newlines included
+ERROR_CHAR:
+	.; // ERROR CHARacter: anything else goes to the parser as an error
+
+/*
+ MBrace : inside #[ ... ]#. Newline or ';' separates rows.
+ */
+
+mode MBrace;
+
+M_MLBRACE: '#[' ANY_WS* -> type(MLBRACE), pushMode(MBrace);
+// Matrix-mode Matrix Left BRACE (nested matrix)
+M_MRBRACE: (ANY_WS | ';')* ']#' -> type(MRBRACE), popMode;
+M_VBAR: '|'; // Matrix-mode Vertical BAR: block column separator
+M_HSEP: (ANY_WS | ';')* '---' '-'* (ANY_WS | ';')*;
+	// Matrix-mode Horizontal SEParator: block row separator (3+ dashes)
+// Matrix-mode Matrix Right BRACE; swallows trailing newlines/';'
+M_LPAREN:
+	'(' -> type(LPAREN), pushMode(Paren); // Matrix-mode Left PARENthesis; newlines ignored inside
+M_RPAREN:
+	')' -> type(RPAREN); // Matrix-mode Right PARENthesis; stray, so the parser reports it
+NL: (HWS* ( ';' | EOL))+ HWS*; // New Line: one row separator for any run of newlines/';'
+M_EQUALS: '=' -> type(EQUALS); // Matrix-mode EQUALS
+M_QMARK: '?' -> type(QMARK); // Matrix-mode Question MARK
+M_COLON: ':' -> type(COLON); // Matrix-mode COLON
+M_PLUS: '+' -> type(PLUS); // Matrix-mode PLUS
+M_MINUS: '-' -> type(MINUS); // Matrix-mode MINUS
+M_STAR: '*' -> type(STAR); // Matrix-mode STAR
+M_SLASH: '/' -> type(SLASH); // Matrix-mode SLASH
+M_COMMA: ',' -> type(COMMA); // Matrix-mode COMMA
+M_NUMBER:
+	NUMBER_BODY -> type(NUMBER); // Matrix-mode NUMBER literal
+M_VAR: VAR_BODY -> type(VAR); // Matrix-mode VARiable reference
+M_INC: '++' -> type(INC); // Matrix-mode INCrement operator
+M_DEC: '--' -> type(DEC); // Matrix-mode DECrement operator
+M_WS: HWS+ -> skip; // Matrix-mode WhiteSpace, NO newline
+M_ERROR_CHAR:
+	. -> type(ERROR_CHAR); // Matrix-mode ERROR CHARacter
+
+/*
+ Paren : inside ( ... ) within a matrix. Newline is whitespace again.
+ */
+
+mode Paren;
+
+P_MLBRACE:
+	'#[' ANY_WS* -> type(MLBRACE), pushMode(MBrace); // Paren-mode Matrix Left BRACE
+P_MRBRACE:
+	']#' -> type(MRBRACE); // Paren-mode Matrix Right BRACE; stray, so the parser reports it
+P_LPAREN:
+	'(' -> type(LPAREN), pushMode(Paren); // Paren-mode Left PARENthesis (nested parens)
+P_RPAREN:
+	')' -> type(RPAREN), popMode; // Paren-mode Right PARENthesis; back to the enclosing mode
+P_EQUALS: '=' -> type(EQUALS); // Paren-mode EQUALS
+P_QMARK: '?' -> type(QMARK); // Paren-mode Question MARK
+P_COLON: ':' -> type(COLON); // Paren-mode COLON
+P_PLUS: '+' -> type(PLUS); // Paren-mode PLUS
+P_MINUS: '-' -> type(MINUS); // Paren-mode MINUS
+P_STAR: '*' -> type(STAR); // Paren-mode STAR
+P_SLASH: '/' -> type(SLASH); // Paren-mode SLASH
+P_COMMA: ',' -> type(COMMA); // Paren-mode COMMA
+P_SEMI_COLON:
+	';' -> type(SEMI_COLON); // Paren-mode SEMI COLON; invalid here, so the parser reports it
+P_NUMBER:
+	NUMBER_BODY -> type(NUMBER); // Paren-mode NUMBER literal
+P_VAR: VAR_BODY -> type(VAR); // Paren-mode VARiable reference
+P_INC: '++' -> type(INC); // Paren-mode INCrement operator
+P_DEC: '--' -> type(DEC); // Paren-mode DECrement operator
+P_WS:
+	ANY_WS+ -> skip; // Paren-mode WhiteSpace, newlines included
+P_ERROR_CHAR:
+	. -> type(ERROR_CHAR); // Paren-mode ERROR CHARacter

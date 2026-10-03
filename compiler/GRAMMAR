@@ -1,0 +1,30 @@
+start:
+    exprs
+  ;
+
+exprs:
+    expr
+  | exprs SEMI_COLON expr
+  ;
+
+expr:
+    ternary_expr
+  ;
+
+ternary_expr:
+    binary_expr
+  | binary_expr QMARK expr COLON ternary_expr
+  ;
+
+binary_expr:
+    binary_expr PLUS unary_expr
+  | unary_expr
+  ;
+
+unary_expr:
+    primary
+  ;
+
+primary:
+    NUMBER
+  ;
