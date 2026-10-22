@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cuda_jit"
+version = "0.1.0"
+description = "Mini translation engine for GPU: generates CUDA C from templates, compiles and launches via CuPy."
+requires-python = ">=3.10"
+dependencies = [
+    "cupy-cuda12x",
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cuda_jit*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "gpu: tests that require a CUDA-capable GPU (deselect with -m 'not gpu')",
+]
+testpaths = ["tests"]
